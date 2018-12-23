@@ -1,59 +1,51 @@
-#changed
 import sys
-from PyQt5 import uic
-from PyQt5 import Signal
+import time
+#from PyQt5 import uic
+from PyQt5.QtCore import QTimer
 from PyQt5.QtWidgets import QApplication, QWidget, QMainWindow, QLabel
+from PyQt5.QtGui import QPixmap
 
 
 #---------------------------------------------
-class MyWidget(QMainWindow):
+class Game(QMainWindow):
     def __init__(self):
-        super().__init__()
-        uic.loadUi('backs.ui',self)
-        self.pushButton_01.clicked.connect(self.run)
-        self.label_01.clicked.connect(self.run)
-
-    def run(self):
-        self.label_01.setText("OK")
+        super().__init__()        
+        self.initUI()
+    
+    def initUI(self):
+        self.setGeometry(800, 800, 800, 800)
+        self.setWindowTitle('MEMO')
         
+        self.label = QLabel(self)
+        pixmap = QPixmap("Colours/Back.jpg")
+        self.label.setPixmap(pixmap)
+        self.label.move(60, 60)
+        self.label.resize(160, 160)
+
+        self.label.installEventFilter(self)
+        self.timer = QTimer()
+        self.timer.timeout.connect(self.tick)
         
-#---------------------------------------------
-#http://qaru.site/questions/11910024/how-to-add-signals-to-a-qlabel-in-pyqt5
-class ExtendedQLabel(QLabel):
-    def __init(self, parent):
-        super().__init__(parent)
-
-    clicked = Signal()
-    rightClicked = pySignal()
-
-    def mousePressEvent(self, ev):
-        if ev.button() == Qt.RightButton:
-            self.rightClicked.emit()
-        else:
-            self.clicked.emit()
-
-
+    #http://www.cyberforum.ru/python-graphics/thread2361731.html
+    def eventFilter(self, obj, event):
+        if event.type() == 2:
+            btn = event.button()
+            pixmap = QPixmap("Bern.jpg")
+            
+            if btn == 1: 
+                self.label.setPixmap(pixmap)
+                self.timer.start(2000)
+            
+        return super(QMainWindow, self).eventFilter(obj, event)        
+   
+    def tick(self):
+        pixmap_win = QPixmap("Colours/Win.jpg")
+        self.label.setPixmap(pixmap_win)
+        self.timer.stop()        
+        
 #---------------------------------------------
 if __name__ == '__main__':
-    print('OK')
-    
-    
     app = QApplication(sys.argv)
-    
-    ex = MyWidget()
+    ex = Game()
     ex.show()    
-    
-    eql = ExtendedQLabel()
-    eql.clicked.connect(lambda: print('clicked'))
-    eql.rightClicked.connect(lambda: print('rightClicked'))
-    eql.show()
     sys.exit(app.exec_())
-    
-
-
-'''
-app = QApplication(sys.argv)
-ex = MyWidget()
-ex.show()
-sys.exit(app.exec_())
-'''
