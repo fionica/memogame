@@ -20,6 +20,10 @@ class CardLabel(QLabel):
     img_path = '' # Индивидуальная картинка карты (путь к файлу)
     card_index = -1 # По умолчанию, индекс карточки
     
+    #Координаты карты:
+    x = 0
+    y = 0
+    
     #---
     def __init__(self, parent):
         super().__init__(parent)        
@@ -30,19 +34,17 @@ class CardLabel(QLabel):
     def tick(self):
         self.setPixmap(QPixmap("Colours/Back.jpg")) # Закрываем карту
         self.timer.stop()
-      
         
 #---------------------------------------------------------------------
 # Основной класс
 class Game(QMainWindow):            
     cards = []
-    first_open_card_index = -1 # Индекс первой (в паре) открытой карты
+    first_open_card_index = -1 #индекс первой (в паре) открытой карты
     
     #---
     def __init__(self):
         super().__init__()        
         self.initUI()
-       
            
     #---
     def initUI(self):        
@@ -70,6 +72,10 @@ class Game(QMainWindow):
             self.card.card_is_guessed = False
             self.card.card_index = i
             
+            #Запоминаем координаты карты:
+            self.card.x = coord_x
+            self.card.y = coord_y            
+            
             self.card.timer = QTimer()
             self.card.timer.timeout.connect(self.card.tick)
             
@@ -89,19 +95,19 @@ class Game(QMainWindow):
             cnt_y += 1
             ##--------------------------------------------------  
             
-            
     #---
     #http://www.cyberforum.ru/python-graphics/thread2361731.html
     def eventFilter(self, obj, event):        
         # 2 - MouseButtonPress - нажата кнопка мыши
         if event.type() == 2:
-            btn = event.button()        
+            btn = event.button()
+            
             # Если нажатая (левый клик) карта не отгадана:
             if (btn == 1) and (not obj.card_is_guessed):
                 obj.setPixmap(QPixmap(obj.img_path))
                         
                 # Если клинули по первой (в паре) карте        
-                if (self.first_open_card_index == -1):
+                if (self.first_open_card_index == -1): 
                     # Запоминаем индекс первой открытой карты
                     self.first_open_card_index = obj.card_index 
                     # Переворачиваем первую карту
@@ -116,26 +122,36 @@ class Game(QMainWindow):
                     obj.setPixmap(QPixmap(obj.img_path)) 
                     
                     # Если картинки парных открытых карт совпадают
-                    if(self.cards[self.first_open_card_index].img_path\
-                       == obj.img_path):
-                        self.cards[self.first_open_card_index].card_is_guessed\
-                            = True
+                    if(self.cards[self.first_open_card_index].img_path == obj.img_path): 
+                        self.cards[self.first_open_card_index].card_is_guessed = True
                         obj.card_is_guessed = True
+                        
                         # Если игра закончена (все карты открыты)
-                        if self.isGameOver():                            
+                        if self.isGameOver():                          
                             self.timerGameOver.start(CARD_SHOW_DELAY)
-                            
+                     
                     # Если не совпадают - закрываем обе открытые карты:        
                     else: 
                         # Закрываем обе карты:
-                        self.cards[self.first_open_card_index].timer.start\
-                            (CARD_SHOW_DELAY)
+                        self.cards[self.first_open_card_index].timer.start(CARD_SHOW_DELAY)
                         obj.timer.start(CARD_SHOW_DELAY)
-
+                        
+                    # Сбрасываем индекс первой открытой карты
                     self.first_open_card_index = -1 
                     # Асинхронное воспроизведение
-                    winsound.PlaySound('wav/drop.wav', winsound.SND_ASYNC)
-                                       
+                    winsound.PlaySound('wav/drop.wav', winsound.SND_ASYNC) 
+                                
+        
+        # 10 - Enter - указатель мыши входит в область компонента
+        if event.type() == 10:
+            obj.move(obj.x-5, obj.y-5)
+            obj.resize(SIZE+10, SIZE+10)
+            
+        # 11- Leave - указатель мыши покидает область компонента
+        if event.type() == 11:
+            obj.move(obj.x, obj.y)
+            obj.resize(SIZE, SIZE)
+        
         return super(QMainWindow, self).eventFilter(obj, event)
     
     
@@ -151,6 +167,7 @@ class Game(QMainWindow):
     #---
     def GameOverEvent(self):                                
         winsound.PlaySound('wav/gameover2.wav', winsound.SND_FILENAME)
+        #winsound.PlaySound('wav/gameover2.wav', winsound.SND_ASYNC)    
         self.resetGame()
         self.timerGameOver.stop()
         
@@ -183,7 +200,7 @@ def process():
         current_path = random.choice(paths)
         del paths[paths.index(current_path)]      
         cards[i] = current_path
-    #print(cards)
+
     return cards 
 #---------------------------------------------------------------------
 if __name__ == '__main__':
