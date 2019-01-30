@@ -5,8 +5,10 @@ import sys # Для cmd
 import random # Для определения местоположения загруженных изображений на картах
 import winsound # Для озвучки переворота карты
 
+from PyQt5 import uic
 from PyQt5.QtCore import QTimer
-from PyQt5.QtWidgets import QApplication, QWidget, QMainWindow, QLabel
+from PyQt5.QtWidgets import QApplication, QWidget, QMainWindow,\
+     QLabel, QPushButton, QButtonGroup, QRadioButton
 from PyQt5.QtGui import QPixmap
 
 N = 4 # Сторона квадрата
@@ -18,6 +20,7 @@ class CardLabel(QLabel):
 
     card_is_guessed = False # True - карточка открыта (отгадана)
     img_path = '' # Индивидуальная картинка карты (путь к файлу)
+    back_img_path = ''
     card_index = -1 # По умолчанию, индекс карточки
     
     #Координаты карты:
@@ -25,14 +28,15 @@ class CardLabel(QLabel):
     y = 0
     
     #---
-    def __init__(self, parent):
+    def __init__(self, parent, back_img_path):
         super().__init__(parent)        
+        self.back_img_path = back_img_path
     
     
     #---
     # Обработчик таймера:
     def tick(self):
-        self.setPixmap(QPixmap("Colours/Back.jpg")) # Закрываем карту
+        self.setPixmap(QPixmap(self.back_img_path)) # Закрываем карту
         self.timer.stop()
         
 #---------------------------------------------------------------------
@@ -48,9 +52,40 @@ class Game(QMainWindow):
            
     #---
     def initUI(self):        
-        self.setGeometry(50, 50, 850, 850)
+        self.setGeometry(50, 50, 820, 860)
         self.setWindowTitle('MEMO')
-                
+        uic.loadUi('uic.ui', self)
+        
+        self.back_img_path = 'images/greenback.jpg' # по умолчанию
+        self.initCards()
+        
+        # Определение цвета рубашки карты
+        #self.label = QLabel('Current')
+        
+        self.radio_button_data = {self.radioButton_101: 'images/pinkback.jpg',
+                                  self.radioButton_102: 'images/greenback.jpg'}
+        
+        self.button_group_01 = QButtonGroup()
+        self.button_group_01.addButton(self.radioButton_101)
+        self.button_group_01.addButton(self.radioButton_102)
+        self.radioButton_102.setChecked(True)
+
+        self.button_group_01.buttonClicked.connect(self._on_radio_button_clicked)   
+
+        #print(self.back_img_path)        
+        
+            
+     
+    #---        
+    def _on_radio_button_clicked(self, button):
+        #print(button)   
+        self.back_img_path = self.radio_button_data[button]
+        self.initCards()
+        #print(self.back_img_path)
+        
+        
+    def initCards(self):
+        #--- Формирование игрового пространства -----------------------------
         ## Для вычисления координат -----
         start_coord = 60
         coord_x = start_coord
@@ -64,9 +99,9 @@ class Game(QMainWindow):
 
         self.card_images = process()
         for i in range(N**2):            
-            self.card = CardLabel(self)
+            self.card = CardLabel(self, self.back_img_path)
             self.card.img_path = self.card_images[i]
-            self.card.setPixmap(QPixmap("Colours/Back.jpg"))
+            self.card.setPixmap(QPixmap(self.back_img_path))
             self.card.setGeometry(coord_x, coord_y, SIZE, SIZE)            
             self.card.installEventFilter(self)
             self.card.card_is_guessed = False
@@ -93,8 +128,8 @@ class Game(QMainWindow):
             ## Определение coord_y:
             coord_y = start_coord + (cnt_y // N)*SIZE + (cnt_y // N)*between
             cnt_y += 1
-            ##--------------------------------------------------  
-            
+            ##-------------------------------------------------- 
+        
     #---
     #http://www.cyberforum.ru/python-graphics/thread2361731.html
     def eventFilter(self, obj, event):        
@@ -166,8 +201,7 @@ class Game(QMainWindow):
     
     #---
     def GameOverEvent(self):                                
-        winsound.PlaySound('wav/gameover2.wav', winsound.SND_FILENAME)
-        #winsound.PlaySound('wav/gameover2.wav', winsound.SND_ASYNC)    
+        winsound.PlaySound('wav/gameover2.wav', winsound.SND_FILENAME)  
         self.resetGame()
         self.timerGameOver.stop()
         
@@ -180,7 +214,8 @@ class Game(QMainWindow):
         
         for i in range(N**2):
             self.cards[i].card_is_guessed = False
-            self.cards[i].setPixmap(QPixmap("Colours/Back.jpg"))
+            self.cards[i].back_img_path = self.back_img_path
+            self.cards[i].setPixmap(QPixmap(self.back_img_path))
             self.cards[i].img_path = self.card_images[i]
             
 #---------------------------------------------------------------------
@@ -188,11 +223,17 @@ class Game(QMainWindow):
 # Возвращает словарь cards, где ключи - индексы от 0 до 15, 
 # значения - пути до файлов. 
 def process():
-    paths = ['Colours/Yellow.jpg', 'Colours/Red.jpg',\
-             'Colours/Purple.jpg', 'Colours/Pink.jpg',\
-             'Colours/Orange.jpg', 'Colours/Lilac.jpg',\
-             'Colours/LGreen.jpg', 'Colours/Blue.jpg']
+    paths1 = ['images/cities/01.jpg', 'images/cities/05.jpg',\
+             'images/cities/02.jpg', 'images/cities/06.jpg',\
+             'images/cities/03.jpg', 'images/cities/07.jpg',\
+             'images/cities/04.jpg', 'images/cities/08.jpg']
     
+    paths2 = ['images/colours/01.jpg', 'images/colours/05.jpg',\
+              'images/colours/02.jpg', 'images/colours/06.jpg',\
+             'images/colours/03.jpg', 'images/colours/07.jpg',\
+             'images/colours/04.jpg', 'images/colours/08.jpg']    
+    
+    paths = paths1    
     paths += paths
     
     cards = {}
