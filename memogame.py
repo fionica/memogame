@@ -59,7 +59,7 @@ class Game(QMainWindow):
         self.back_img_path = 'images/greenback.jpg' # по умолчанию
         self.initCards()
         
-        # Определение цвета рубашки карты
+        # Изменение цвета рубашки карты
         #self.label = QLabel('Current')
         
         self.radio_button_data = {self.radioButton_101: 'images/pinkback.jpg',
@@ -68,9 +68,11 @@ class Game(QMainWindow):
         self.button_group_01 = QButtonGroup()
         self.button_group_01.addButton(self.radioButton_101)
         self.button_group_01.addButton(self.radioButton_102)
+        
         self.radioButton_102.setChecked(True)
 
-        self.button_group_01.buttonClicked.connect(self._on_radio_button_clicked)   
+        self.button_group_01.buttonClicked.connect(self._on_radio_button_clicked)
+        #print('clicked')
 
         #print(self.back_img_path)        
         
@@ -80,7 +82,11 @@ class Game(QMainWindow):
     def _on_radio_button_clicked(self, button):
         #print(button)   
         self.back_img_path = self.radio_button_data[button]
-        self.initCards()
+        for i in range(N**2):
+            if (self.cards[i].card_is_guessed == False):
+                self.cards[i].back_img_path = self.back_img_path
+                self.cards[i].setPixmap(QPixmap(self.back_img_path))
+        print('clicked')
         #print(self.back_img_path)
         
         
